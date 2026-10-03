@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import field_validator
@@ -12,6 +13,7 @@ class Settings(BaseSettings):
     secret_key: str
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
     max_upload_size_mb: int = 25
+    storage_path: Path = Path("/storage")
     ai_provider: str = "mock"
     ai_api_key: str | None = None
 

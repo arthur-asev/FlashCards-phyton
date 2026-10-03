@@ -20,8 +20,10 @@ GET /ready
 ```text
 POST /api/v1/files/upload
 GET  /api/v1/files/{id}
-DELETE /api/v1/files/{id}
+GET  /api/v1/files/{id}/preview
 ```
+
+O upload valida tamanho, extensão e conteúdo, grava o arquivo em storage e registra nome, MIME detectado, tamanho e SHA-256 no banco. A prévia da fase de upload retorna esses metadados; a leitura de linhas e abas é fornecida pela fase de planilhas.
 
 ## Imports
 ```text

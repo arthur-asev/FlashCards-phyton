@@ -31,11 +31,13 @@ Validação: `docker compose config --quiet`; testes de saúde do backend (4 apr
 Validação: 7 testes backend aprovados; Ruff aprovado; migration inicial aplicada ao PostgreSQL e `alembic check` sem diferenças; seed executado duas vezes, mantendo um único subject, deck e card de exemplo.
 
 ## Fase 3 — Upload
-- upload;
-- validação;
-- armazenamento;
-- checksum;
-- preview.
+- [x] upload;
+- [x] validação;
+- [x] armazenamento;
+- [x] checksum;
+- [x] preview.
+
+Validação: 15 testes backend aprovados; Ruff, formatação e Compose aprovados. Upload valida assinatura/conteúdo e limite, persiste metadados no PostgreSQL e bytes no storage com SHA-256. A prévia desta fase apresenta metadados do arquivo; preview tabular de linhas/abas será concluído na fase 4.
 
 ## Fase 4 — Planilhas
 - XLSX;
