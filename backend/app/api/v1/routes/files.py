@@ -2,12 +2,19 @@ from hashlib import sha256
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db.session import get_db
+from app.importers.spreadsheets import (
+    SpreadsheetError,
+    SpreadsheetImporter,
+    SpreadsheetTooLargeError,
+    validate_column_mapping,
+)
 from app.models import File as FileRecord
 from app.services.files import (
     InvalidUploadError,
@@ -18,6 +25,12 @@ from app.services.files import (
 
 router = APIRouter()
 STORAGE_ROOT = settings.storage_path
+spreadsheet_importer = SpreadsheetImporter()
+
+
+class SpreadsheetValidationRequest(BaseModel):
+    mapping: dict[str, str]
+    sheet_name: str | None = None
 
 
 def serialize_file(record: FileRecord) -> dict[str, str | int]:
@@ -99,12 +112,24 @@ def get_file(file_id: UUID, db: Session = Depends(get_db)) -> dict[str, str | in
 
 
 @router.get("/{file_id}/preview")
-def preview_file(file_id: UUID, db: Session = Depends(get_db)) -> dict[str, object]:
+def preview_file(
+    file_id: UUID,
+    sheet_name: str | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
     record = get_file_record(file_id, db)
     if not Path(record.storage_path).is_file():
         raise HTTPException(
             status_code=410, detail="Stored file is no longer available."
         )
+
+    try:
+        table = spreadsheet_importer.read(record.storage_path, sheet_name)
+    except SpreadsheetTooLargeError as exc:
+        raise HTTPException(status_code=413, detail=str(exc)) from exc
+    except SpreadsheetError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     return {
         **serialize_file(record),
@@ -112,5 +137,33 @@ def preview_file(file_id: UUID, db: Session = Depends(get_db)) -> dict[str, obje
             "format": Path(record.filename).suffix.lower().lstrip("."),
             "size_bytes": record.size,
             "checksum": record.checksum,
+            "sheet_names": table.sheet_names,
+            "selected_sheet": table.selected_sheet,
+            "columns": table.headers,
+            "rows": table.rows[:limit],
+            "row_count": len(table.rows),
+            "has_more": len(table.rows) > limit,
         },
     }
+
+
+@router.post("/{file_id}/validate")
+def validate_file(
+    file_id: UUID,
+    request: SpreadsheetValidationRequest,
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    record = get_file_record(file_id, db)
+    if not Path(record.storage_path).is_file():
+        raise HTTPException(
+            status_code=410, detail="Stored file is no longer available."
+        )
+
+    try:
+        table = spreadsheet_importer.read(record.storage_path, request.sheet_name)
+    except SpreadsheetTooLargeError as exc:
+        raise HTTPException(status_code=413, detail=str(exc)) from exc
+    except SpreadsheetError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return validate_column_mapping(table, request.mapping)

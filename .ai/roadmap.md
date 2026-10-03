@@ -40,12 +40,14 @@ Validação: 7 testes backend aprovados; Ruff aprovado; migration inicial aplica
 Validação: 15 testes backend aprovados; Ruff, formatação e Compose aprovados. Upload valida assinatura/conteúdo e limite, persiste metadados no PostgreSQL e bytes no storage com SHA-256. A prévia desta fase apresenta metadados do arquivo; preview tabular de linhas/abas será concluído na fase 4.
 
 ## Fase 4 — Planilhas
-- XLSX;
-- CSV;
-- XLS;
-- mapeamento;
-- normalização;
-- validação.
+- [x] XLSX;
+- [x] CSV;
+- [x] XLS;
+- [x] mapeamento;
+- [x] normalização;
+- [x] validação.
+
+Validação: 25 testes backend aprovados; Ruff, formatação, Compose e diff check aprovados. Preview seleciona abas, detecta colunas e limita a resposta; mapeamento normaliza campos sem persistir cards e valida obrigatoriedade, células vazias, duplicatas, colunas inconsistentes e conteúdo excessivo. Leituras síncronas limitadas a 10.000 linhas; ODS permanece desabilitado até haver parser compatível.
 
 ## Fase 5 — Exportação
 - CSV;

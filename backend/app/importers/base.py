@@ -1,6 +1,7 @@
-from typing import Protocol, Any
+from typing import Protocol, TypeVar
+
+T = TypeVar("T")
 
 
-class Importer(Protocol):
-    def read(self, path: str) -> Any:
-        ...
+class Importer(Protocol[T]):
+    def read(self, path: str) -> T: ...

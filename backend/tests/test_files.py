@@ -63,11 +63,10 @@ def test_upload_persists_csv_and_exposes_metadata_preview(
     assert metadata.status_code == 200
     assert metadata.json() == uploaded
     assert preview.status_code == 200
-    assert preview.json()["preview"] == {
-        "format": "csv",
-        "size_bytes": len(content),
-        "checksum": uploaded["checksum"],
-    }
+    preview_metadata = preview.json()["preview"]
+    assert preview_metadata["format"] == "csv"
+    assert preview_metadata["size_bytes"] == len(content)
+    assert preview_metadata["checksum"] == uploaded["checksum"]
 
 
 def test_upload_accepts_valid_xlsx(client: TestClient) -> None:
@@ -98,6 +97,7 @@ def test_upload_accepts_valid_xlsx(client: TestClient) -> None:
     ("filename", "content", "expected_status"),
     [
         ("script.exe", b"payload", 400),
+        ("cards.ods", b"not supported", 400),
         ("fake.xlsx", b"not a zip archive", 422),
         ("invalid.csv", b"\xff\xfe", 422),
         ("empty.csv", b"", 422),

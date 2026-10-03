@@ -22,6 +22,8 @@ Entradas:
 - CSV
 - ODS, se viável
 
+CSV, XLSX e XLS possuem preview e validação síncronos com limite de 10.000 linhas por requisição. ODS permanece fora do upload até haver leitor validado.
+
 Saídas:
 - CSV
 - JSON

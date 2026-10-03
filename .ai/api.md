@@ -20,10 +20,11 @@ GET /ready
 ```text
 POST /api/v1/files/upload
 GET  /api/v1/files/{id}
-GET  /api/v1/files/{id}/preview
+GET  /api/v1/files/{id}/preview?sheet_name=&limit=
+POST /api/v1/files/{id}/validate
 ```
 
-O upload valida tamanho, extensão e conteúdo, grava o arquivo em storage e registra nome, MIME detectado, tamanho e SHA-256 no banco. A prévia da fase de upload retorna esses metadados; a leitura de linhas e abas é fornecida pela fase de planilhas.
+O upload valida tamanho, extensão e conteúdo, grava o arquivo em storage e registra nome, MIME detectado, tamanho e SHA-256 no banco. O preview lê CSV, XLSX e XLS, lista abas, aceita seleção por `sheet_name` e limita a resposta a 100 linhas (`limit`, padrão 20). O endpoint de validação recebe `{ "sheet_name": "Sheet1", "mapping": { "front": "Question", "back": "Answer" } }` e normaliza os campos mapeados sem persistir cards. Leituras síncronas são limitadas a 10.000 linhas; ODS ainda não é aceito.
 
 ## Imports
 ```text

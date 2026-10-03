@@ -11,7 +11,7 @@ class InvalidUploadError(ValueError):
     """Raised when uploaded content does not match its supported format."""
 
 
-SUPPORTED_EXTENSIONS = {".csv", ".xls", ".xlsx", ".ods"}
+SUPPORTED_EXTENSIONS = {".csv", ".xls", ".xlsx"}
 XLS_SIGNATURE = bytes.fromhex("D0CF11E0A1B11AE1")
 
 
@@ -45,26 +45,15 @@ def validate_upload_content(filename: str, content: bytes) -> str:
             raise InvalidUploadError("File content does not match the XLS format.")
         return "application/vnd.ms-excel"
 
+    if extension != ".xlsx":
+        raise UnsupportedUploadError("Unsupported file type.")
+
     try:
         with ZipFile(BytesIO(content)) as archive:
             names = set(archive.namelist())
-            if extension == ".xlsx":
-                if "[Content_Types].xml" not in names or "xl/workbook.xml" not in names:
-                    raise InvalidUploadError(
-                        "File content does not match the XLSX format."
-                    )
-                return (
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
-            if "mimetype" not in names or archive.getinfo("mimetype").file_size > 100:
+            if "[Content_Types].xml" not in names or "xl/workbook.xml" not in names:
                 raise InvalidUploadError("File content does not match the ODS format.")
-            if (
-                archive.read("mimetype")
-                != b"application/vnd.oasis.opendocument.spreadsheet"
-            ):
-                raise InvalidUploadError("File content does not match the ODS format.")
-            return "application/vnd.oasis.opendocument.spreadsheet"
+            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     except BadZipFile as exc:
         raise InvalidUploadError(
             "File content is not a valid spreadsheet archive."
