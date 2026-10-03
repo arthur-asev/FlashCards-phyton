@@ -1,7 +1,10 @@
 from fastapi import APIRouter
 
-from app.api.v1.routes import exports, files
+from app.api.v1.routes import cards, decks, exports, files, taxonomy
 
 router = APIRouter()
 router.include_router(files.router, prefix="/files", tags=["files"])
 router.include_router(exports.router, prefix="/export", tags=["export"])
+router.include_router(decks.router, prefix="/decks", tags=["decks"])
+router.include_router(cards.router, prefix="/cards", tags=["cards"])
+router.include_router(taxonomy.router, tags=["taxonomy"])

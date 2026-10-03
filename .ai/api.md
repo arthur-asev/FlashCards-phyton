@@ -44,6 +44,8 @@ PUT    /api/v1/decks/{id}
 DELETE /api/v1/decks/{id}
 ```
 
+Listagem de decks aceita `page`, `page_size` (máximo 100), `search` e `subject_id`.
+
 ## Cards
 ```text
 GET    /api/v1/cards
@@ -52,6 +54,17 @@ GET    /api/v1/cards/{id}
 PUT    /api/v1/cards/{id}
 DELETE /api/v1/cards/{id}
 ```
+
+Listagem de cards aceita `page`, `page_size` (máximo 100), `search`, `deck_id`, `subject_id`, `topic_id`, `tag`, `difficulty`, `sort_by` e `order`. Cards aceitam tags por nome e um `topic_id` opcional; o tópico precisa pertencer à matéria do deck quando ela estiver definida.
+
+## Matérias, assuntos e tags
+```text
+GET/POST/PUT/DELETE /api/v1/subjects
+GET/POST/PUT/DELETE /api/v1/topics
+GET/POST/PUT/DELETE /api/v1/tags
+```
+
+Listagens aceitam paginação; matérias, assuntos e tags também aceitam `search`. Não é possível excluir matéria ou assunto ainda referenciado por decks/cards.
 
 ## IA
 ```text

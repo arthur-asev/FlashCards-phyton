@@ -39,7 +39,7 @@ PostgreSQL + SQLAlchemy + Alembic.
 - created_at
 - updated_at
 
-Subject 1:N Topic.
+Subject 1:N Topic. O nome do tópico é único dentro da matéria.
 
 ## Deck
 - id
@@ -57,6 +57,7 @@ Deck 1:N Card.
 ## Card
 - id
 - deck_id
+- topic_id (opcional)
 - front
 - back
 - explanation
@@ -71,6 +72,7 @@ Deck 1:N Card.
 - name
 
 Card N:N Tag usando tabela intermediária.
+Card N:1 Topic quando associado a um assunto.
 
 ## Review
 - id

@@ -57,13 +57,15 @@ Validação: 25 testes backend aprovados; Ruff, formatação, Compose e diff che
 Validação: 36 testes backend aprovados; Ruff aprovado; endpoints retornam anexos com MIME e nomes corretos. CSV usa UTF-8 e escaping padrão, JSON preserva Unicode e tags como lista, XLSX é reaberto em teste; payloads limitados a 10.000 cards.
 
 ## Fase 6 — Flashcards
-- CRUD de decks;
-- CRUD de cards;
-- matérias;
-- assuntos;
-- tags;
-- filtros;
-- busca.
+- [x] CRUD de decks;
+- [x] CRUD de cards;
+- [x] matérias;
+- [x] assuntos;
+- [x] tags;
+- [x] filtros;
+- [x] busca.
+
+Validação: testes cobrindo CRUD, filtros, busca, paginação, referências e exclusões; migration aditiva para `Card.topic_id` aplicada; `alembic check` sem diferenças.
 
 ## Fase 7 — IA
 - AIProvider;

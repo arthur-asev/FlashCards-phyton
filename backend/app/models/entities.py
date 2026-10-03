@@ -13,6 +13,7 @@ from sqlalchemy import (
     Integer,
     String,
     Table,
+    UniqueConstraint,
     Uuid,
     func,
     text,
@@ -36,7 +37,10 @@ class TimestampMixin:
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
 
@@ -59,7 +63,10 @@ class Subject(TimestampMixin, Base):
 
 class Topic(TimestampMixin, Base):
     __tablename__ = "topics"
-    __table_args__ = (CheckConstraint("length(name) > 0", name="name_not_empty"),)
+    __table_args__ = (
+        CheckConstraint("length(name) > 0", name="name_not_empty"),
+        UniqueConstraint("subject_id", "name", name="uq_topics_subject_id_name"),
+    )
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
     subject_id: Mapped[UUID] = mapped_column(
@@ -89,6 +96,9 @@ class Card(TimestampMixin, Base):
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
     deck_id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("decks.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    topic_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("topics.id", ondelete="SET NULL"), index=True
     )
     front: Mapped[str] = mapped_column(String(10000), nullable=False)
     back: Mapped[str] = mapped_column(String(10000), nullable=False)
