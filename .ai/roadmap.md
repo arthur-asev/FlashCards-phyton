@@ -68,12 +68,14 @@ Validação: 36 testes backend aprovados; Ruff aprovado; endpoints retornam anex
 Validação: testes cobrindo CRUD, filtros, busca, paginação, referências e exclusões; migration aditiva para `Card.topic_id` aplicada; `alembic check` sem diferenças.
 
 ## Fase 7 — IA
-- AIProvider;
-- MockProvider;
-- integração com primeiro provedor;
-- geração;
-- validação;
-- histórico.
+- [x] AIProvider;
+- [x] MockProvider;
+- [x] integração com primeiro provedor;
+- [x] geração;
+- [x] validação;
+- [x] histórico.
+
+Validação: 54 testes backend aprovados; provider OpenAI testado com HTTPX MockTransport, sem chamadas externas; geração valida quantidade, schema e duplicatas e mantém histórico de sucesso/falha. `mock` continua como padrão; resultados ficam como drafts no histórico e não criam cards automaticamente.
 
 ## Fase 8 — Jobs
 - Redis;

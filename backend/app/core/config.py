@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     storage_path: Path = Path("/storage")
     ai_provider: str = "mock"
     ai_api_key: str | None = None
+    ai_model: str = "gpt-4o-mini"
+    ai_base_url: str = "https://api.openai.com/v1"
+    ai_timeout_seconds: float = 30.0
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

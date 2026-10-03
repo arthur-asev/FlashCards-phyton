@@ -69,8 +69,13 @@ Listagens aceitam paginação; matérias, assuntos e tags também aceitam `searc
 ## IA
 ```text
 POST /api/v1/ai/generate-cards
+GET  /api/v1/ai/generations
 GET  /api/v1/ai/generations/{id}
 ```
+
+O POST recebe `subject`, `topic`, `content`, `quantity` (1–20), `difficulty`, `objective`, `language` e `deck_id` opcional. A saída é validada quanto ao schema, quantidade e duplicatas. O histórico registra status `PROCESSING`, `COMPLETED` ou `FAILED` e os cards gerados como draft; nenhum card é criado automaticamente. Use o CRUD de cards após revisão.
+
+`AI_PROVIDER` aceita `mock` (padrão) ou `openai`. OpenAI usa `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` e `AI_TIMEOUT_SECONDS` no ambiente; a chave não é retornada nem armazenada no histórico. Falhas do provider e respostas inválidas são registradas com códigos sanitizados.
 
 ## Exportação
 ```text

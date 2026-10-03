@@ -1,13 +1,21 @@
-from app.ai.provider import AIProvider, FlashcardGenerationRequest
+from app.ai.provider import FlashcardGenerationRequest, GeneratedFlashcard
 
 
-class MockProvider(AIProvider):
-    def generate_flashcards(self, request: FlashcardGenerationRequest) -> list[dict]:
+class MockProvider:
+    name = "mock"
+    model = "mock-v1"
+
+    def generate_flashcards(
+        self,
+        request: FlashcardGenerationRequest,
+    ) -> list[GeneratedFlashcard]:
         return [
-            {
-                "front": f"O que deve ser estudado em {request.topic}?",
-                "back": "Exemplo de card gerado pelo provedor mock.",
-                "difficulty": request.difficulty,
-                "tags": [request.subject, request.topic],
-            }
+            GeneratedFlashcard(
+                front=f"Pergunta de demonstração {index + 1} sobre {request.topic}",
+                back=f"Conteúdo de demonstração: {request.content[:160]}",
+                difficulty=request.difficulty,
+                tags=[request.subject, request.topic],
+                source="mock",
+            )
+            for index in range(request.quantity)
         ]

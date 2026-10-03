@@ -81,6 +81,8 @@ AIService
        +-- MockProvider
 ```
 
+`AIProvider` é um Protocol. `AIService` valida schema, quantidade e duplicatas antes de registrar o resultado. OpenAI usa HTTPX; MockProvider é o padrão em desenvolvimento e testes.
+
 ## 8. Jobs
 Estados:
 - PENDING
