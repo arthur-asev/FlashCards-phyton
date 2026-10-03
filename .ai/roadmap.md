@@ -50,9 +50,11 @@ Validação: 15 testes backend aprovados; Ruff, formatação e Compose aprovados
 Validação: 25 testes backend aprovados; Ruff, formatação, Compose e diff check aprovados. Preview seleciona abas, detecta colunas e limita a resposta; mapeamento normaliza campos sem persistir cards e valida obrigatoriedade, células vazias, duplicatas, colunas inconsistentes e conteúdo excessivo. Leituras síncronas limitadas a 10.000 linhas; ODS permanece desabilitado até haver parser compatível.
 
 ## Fase 5 — Exportação
-- CSV;
-- JSON;
-- XLSX.
+- [x] CSV;
+- [x] JSON;
+- [x] XLSX.
+
+Validação: 36 testes backend aprovados; Ruff aprovado; endpoints retornam anexos com MIME e nomes corretos. CSV usa UTF-8 e escaping padrão, JSON preserva Unicode e tags como lista, XLSX é reaberto em teste; payloads limitados a 10.000 cards.
 
 ## Fase 6 — Flashcards
 - CRUD de decks;

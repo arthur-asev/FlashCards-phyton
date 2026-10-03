@@ -66,6 +66,8 @@ POST /api/v1/export/json
 POST /api/v1/export/xlsx
 ```
 
+Os três endpoints recebem `{ "cards": [{ "front": "...", "back": "...", "tags": [] }] }` e retornam um anexo com nome `flashcards.<formato>`. Cada solicitação aceita até 10.000 cards; os campos extras incluem explanation, example, difficulty, subject, topic e source. Tags são listas no JSON e texto separado por `; ` em CSV/XLSX.
+
 ## Reviews
 ```text
 POST /api/v1/cards/{id}/review

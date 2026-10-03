@@ -58,7 +58,7 @@ Implementações:
 Interface:
 ```python
 class Exporter:
-    def export(self, data):
+  def export(self, data) -> bytes:
         ...
 ```
 
@@ -67,6 +67,8 @@ Implementações:
 - JsonExporter
 - XlsxExporter
 - AnkiExporter
+
+Os endpoints de exportação recebem uma lista validada de cards e retornam o arquivo como resposta HTTP; tags permanecem como lista em JSON e são unidas por `; ` em CSV/XLSX.
 
 ## 7. IA
 ```text
