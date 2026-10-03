@@ -1,0 +1,80 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: flashcard_backend
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./storage:/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: ./backend
+    container_name: flashcard_worker
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+      - ./storage:/storage
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    command: python -m app.workers.worker
+
+  frontend:
+    image: node:22-alpine
+    container_name: flashcard_frontend
+    working_dir: /app
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: flashcard_postgres
+    environment:
+      POSTGRES_DB: flashcard
+      POSTGRES_USER: flashcard
+      POSTGRES_PASSWORD: flashcard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flashcard -d flashcard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: flashcard_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
