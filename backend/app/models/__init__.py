@@ -1,5 +1,6 @@
 from app.models.entities import (
     AIGeneration,
+    BackgroundJob,
     Card,
     ConversionJob,
     Deck,
@@ -14,6 +15,7 @@ from app.models.entities import (
 
 __all__ = [
     "AIGeneration",
+    "BackgroundJob",
     "Card",
     "ConversionJob",
     "Deck",

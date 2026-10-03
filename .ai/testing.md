@@ -58,6 +58,8 @@ Testar:
 - erro do provedor;
 - cards duplicados.
 
+Jobs devem ser testados com fila Redis isolada/fake para validar retry, falha terminal, recuperação de jobs interrompidos e entrega duplicada sem depender de provedores externos.
+
 ## Fixtures
 Criar fixtures para:
 - usuário;

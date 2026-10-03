@@ -77,6 +77,15 @@ O POST recebe `subject`, `topic`, `content`, `quantity` (1–20), `difficulty`, 
 
 `AI_PROVIDER` aceita `mock` (padrão) ou `openai`. OpenAI usa `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` e `AI_TIMEOUT_SECONDS` no ambiente; a chave não é retornada nem armazenada no histórico. Falhas do provider e respostas inválidas são registradas com códigos sanitizados.
 
+## Jobs
+```text
+POST /api/v1/jobs/ai-generations
+GET  /api/v1/jobs/{id}
+POST /api/v1/jobs/{id}/retry
+```
+
+O POST aceita a mesma entrada de geração de IA e retorna `202` com o ID e status `PENDING`. Consulte o job para acompanhar tentativas, status e resultado. Falhas transitórias do provider são repetidas até `max_attempts`; jobs `FAILED` podem receber retry manual. O resultado é separado do endpoint síncrono e não cria cards automaticamente.
+
 ## Exportação
 ```text
 POST /api/v1/export/csv

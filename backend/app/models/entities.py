@@ -213,3 +213,24 @@ class AIGeneration(TimestampMixin, Base):
     output_tokens: Mapped[int | None] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="PENDING")
     generation_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+
+
+class BackgroundJob(TimestampMixin, Base):
+    __tablename__ = "background_jobs"
+    __table_args__ = (
+        CheckConstraint(f"status IN ({JOB_STATUSES})", name="valid_status"),
+        CheckConstraint("attempts >= 0", name="attempts_non_negative"),
+        CheckConstraint("max_attempts >= 1", name="max_attempts_positive"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    job_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="PENDING", index=True)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    result: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("3"))
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    error_message: Mapped[str | None] = mapped_column(String(1000))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -91,6 +91,8 @@ Estados:
 - FAILED
 - CANCELLED
 
+PostgreSQL é a fonte de verdade do status, tentativas, payload e resultado; Redis transporta IDs na fila. O worker usa claim condicional para tolerar entrega duplicada, retry limitado e recuperação de jobs interrompidos.
+
 ## 9. Frontend
 ```text
 src/

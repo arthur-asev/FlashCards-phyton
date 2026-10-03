@@ -78,12 +78,14 @@ Validação: testes cobrindo CRUD, filtros, busca, paginação, referências e e
 Validação: 54 testes backend aprovados; provider OpenAI testado com HTTPX MockTransport, sem chamadas externas; geração valida quantidade, schema e duplicatas e mantém histórico de sucesso/falha. `mock` continua como padrão; resultados ficam como drafts no histórico e não criam cards automaticamente.
 
 ## Fase 8 — Jobs
-- Redis;
-- worker;
-- jobs;
-- status;
-- retry;
-- tratamento de falhas.
+- [x] Redis;
+- [x] worker;
+- [x] jobs;
+- [x] status;
+- [x] retry;
+- [x] tratamento de falhas.
+
+Validação: 62 testes backend aprovados; fila Redis com estado persistido no PostgreSQL, claim atômico, recuperação de jobs pendentes/interrompidos, retries limitados e manuais; testes usam Redis fake e provider simulado. O worker Compose iniciou; resultados de geração seguem sem criar cards automaticamente.
 
 ## Fase 9 — Revisão
 - reviews;

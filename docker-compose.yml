@@ -21,6 +21,7 @@ services:
     build:
       context: ./backend
     container_name: flashcard_worker
+    restart: unless-stopped
     env_file:
       - .env
     volumes:
