@@ -139,3 +139,12 @@ Utilizar foreign keys, unique constraints, check constraints quando apropriado e
 
 ## Migrations
 Toda alteração estrutural via Alembic. Revisar migrations antes de aplicar.
+
+O metadata fica em `app.db.base.Base`; as entidades são importadas por `app.models` para autogenerate. Com o Compose ativo:
+
+```bash
+docker compose exec --workdir /app backend alembic upgrade head
+docker compose exec --workdir /app backend python -m app.db.seed
+```
+
+O seed cria dados de exemplo idempotentes para desenvolvimento. Não é executado automaticamente ao iniciar a API.

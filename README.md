@@ -30,6 +30,8 @@ Backend:
 
 ```bash
 docker compose exec --workdir /app backend python -m pytest /app/tests
+docker compose exec --workdir /app backend alembic upgrade head
+docker compose exec --workdir /app backend python -m app.db.seed
 ```
 
 Frontend:

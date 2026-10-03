@@ -2,13 +2,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from redis import Redis
 from redis.exceptions import RedisError
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.config import settings
 from app.api.v1.router import router
+from app.core.config import settings
+from app.db.session import database_engine
 
-database_engine = create_engine(settings.database_url, pool_pre_ping=True)
 redis_client = Redis.from_url(settings.redis_url)
 
 app = FastAPI(

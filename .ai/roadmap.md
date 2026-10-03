@@ -22,11 +22,13 @@ Resultado: a base existente é um monólito modular com FastAPI/Python 3.12, Vue
 Validação: `docker compose config --quiet`; testes de saúde do backend (4 aprovados); Ruff nos arquivos Python alterados; build de produção Vue/TypeScript; endpoints `/health` e `/ready` verificados com PostgreSQL e Redis ativos. `/health` verifica o processo; `/ready` verifica as duas dependências e retorna 503 se uma delas estiver indisponível.
 
 ## Fase 2 — Banco
-- SQLAlchemy;
-- Alembic;
-- entidades;
-- migrations;
-- seeds de desenvolvimento.
+- [x] SQLAlchemy;
+- [x] Alembic;
+- [x] entidades;
+- [x] migrations;
+- [x] seeds de desenvolvimento.
+
+Validação: 7 testes backend aprovados; Ruff aprovado; migration inicial aplicada ao PostgreSQL e `alembic check` sem diferenças; seed executado duas vezes, mantendo um único subject, deck e card de exemplo.
 
 ## Fase 3 — Upload
 - upload;
