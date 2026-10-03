@@ -96,15 +96,17 @@ Validação: 62 testes backend aprovados; fila Redis com estado persistido no Po
 Validação: 77 testes backend aprovados; algoritmo SM-2 puro com ratings 0–5, ease mínimo e reset em falha; API persiste histórico, calcula próxima data e lista cards nunca revisados/vencidos. Não foi necessária migration.
 
 ## Fase 10 — Frontend completo
-- dashboard;
-- upload;
-- preview;
-- mapeamento;
-- decks;
-- cards;
-- geração por IA;
-- revisão;
-- estatísticas básicas.
+- [x] dashboard;
+- [x] upload;
+- [x] preview;
+- [x] mapeamento;
+- [x] decks;
+- [x] cards;
+- [x] geração por IA;
+- [x] revisão;
+- [x] estatísticas básicas.
+
+Validação: 79 testes backend aprovados; build `vue-tsc --noEmit && vite build` aprovado. A interface Vue/TypeScript cobre dashboard, upload com preview tabular, seleção de aba, mapeamento e importação para deck; CRUD e busca de decks/cards; geração assíncrona por IA com drafts; sessão de revisão e métricas. A importação revalida no servidor antes de criar cards, assuntos e tags. O build usa `--noEmit` para não gerar JavaScript nem build-info dentro de `src`.
 
 ## Fase 11 — Segurança
 - autenticação;
