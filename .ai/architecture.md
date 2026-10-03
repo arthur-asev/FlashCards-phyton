@@ -93,6 +93,8 @@ Estados:
 
 PostgreSQL é a fonte de verdade do status, tentativas, payload e resultado; Redis transporta IDs na fila. O worker usa claim condicional para tolerar entrega duplicada, retry limitado e recuperação de jobs interrompidos.
 
+O agendamento de reviews fica isolado em `app.reviews.scheduling`; a API persiste cada avaliação e consulta a última review para calcular o próximo intervalo.
+
 ## 9. Frontend
 ```text
 src/

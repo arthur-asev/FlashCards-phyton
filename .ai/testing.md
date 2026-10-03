@@ -22,6 +22,8 @@ Testar:
 - regras de cards;
 - repetição espaçada.
 
+O scheduler de repetição espaçada deve ter testes puros para rating, intervalos, ease mínimo e reset, além de testes de API para persistência, fila de cards vencidos e histórico.
+
 ## Integração
 Testar:
 - FastAPI;

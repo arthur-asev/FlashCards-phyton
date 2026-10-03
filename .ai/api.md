@@ -99,7 +99,11 @@ Os três endpoints recebem `{ "cards": [{ "front": "...", "back": "...", "tags":
 ```text
 POST /api/v1/cards/{id}/review
 GET  /api/v1/reviews/due
+GET  /api/v1/reviews/history
+GET  /api/v1/reviews/stats
 ```
+
+O POST recebe `{ "rating": 0 }` a `{ "rating": 5 }`; registra a avaliação e retorna intervalo, ease, repetições e `next_review_at`. `/due` inclui cards sem review e reviews vencidas e aceita paginação/filtro por deck. `/history` aceita paginação e `card_id`; `/stats` retorna cards totais, revisados, pendentes, vencidos e total de reviews.
 
 ## Erros
 Formato:

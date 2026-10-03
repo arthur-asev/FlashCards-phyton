@@ -88,10 +88,12 @@ Validação: 54 testes backend aprovados; provider OpenAI testado com HTTPX Mock
 Validação: 62 testes backend aprovados; fila Redis com estado persistido no PostgreSQL, claim atômico, recuperação de jobs pendentes/interrompidos, retries limitados e manuais; testes usam Redis fake e provider simulado. O worker Compose iniciou; resultados de geração seguem sem criar cards automaticamente.
 
 ## Fase 9 — Revisão
-- reviews;
-- cards pendentes;
-- histórico;
-- algoritmo isolado de repetição espaçada.
+- [x] reviews;
+- [x] cards pendentes;
+- [x] histórico;
+- [x] algoritmo isolado de repetição espaçada.
+
+Validação: 77 testes backend aprovados; algoritmo SM-2 puro com ratings 0–5, ease mínimo e reset em falha; API persiste histórico, calcula próxima data e lista cards nunca revisados/vencidos. Não foi necessária migration.
 
 ## Fase 10 — Frontend completo
 - dashboard;
