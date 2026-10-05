@@ -79,6 +79,33 @@ def test_confirmed_import_creates_cards_tags_topic_and_import_history(import_con
     assert cards["items"][0]["topic_id"]
 
 
+def test_csv_import_uses_column_indexes_to_create_flashcards(import_context) -> None:
+    client, _session_factory = import_context
+    deck = client.post("/api/v1/decks", json={"name": "Vocabulário"}).json()
+    content = "Resposta,ID,Pergunta\nUma linguagem de programação,1,O que é Python?\n".encode("utf-8")
+    uploaded = client.post(
+        "/api/v1/files/upload",
+        files={"file": ("flashcards.csv", content, "text/csv")},
+    )
+    assert uploaded.status_code == 201, uploaded.text
+
+    imported = client.post(
+        "/api/v1/imports",
+        json={
+            "file_id": uploaded.json()["id"],
+            "deck_id": deck["id"],
+            "mapping": {"front": 2, "back": 0},
+        },
+    )
+
+    assert imported.status_code == 201, imported.text
+    assert imported.json()["processed_rows"] == 1
+    cards = client.get(f"/api/v1/cards?deck_id={deck['id']}").json()
+    assert cards["total"] == 1
+    assert cards["items"][0]["front"] == "O que é Python?"
+    assert cards["items"][0]["back"] == "Uma linguagem de programação"
+
+
 def test_import_requires_validation_and_existing_deck(import_context) -> None:
     client, _session_factory = import_context
     uploaded = client.post(

@@ -3,13 +3,12 @@ import { computed, onMounted, ref, watch } from "vue";
 import { AlertCircle, Check, ChevronDown, FileSpreadsheet, Upload } from "@lucide/vue";
 
 import { api, ApiError } from "../services/api";
-import type { Deck, ImportResult, SpreadsheetPreview, SpreadsheetValidation, UploadedFile } from "../types";
+import type { Deck, ImportResult, SpreadsheetPreview, SpreadsheetValidation, Subject, UploadedFile } from "../types";
 
 const targets = [
   { key: "front", label: "Frente", required: true },
   { key: "back", label: "Verso", required: true },
   { key: "explanation", label: "Explicação", required: false },
-  { key: "subject", label: "Matéria", required: false },
   { key: "topic", label: "Assunto", required: false },
   { key: "tags", label: "Tags", required: false },
   { key: "difficulty", label: "Dificuldade", required: false },
@@ -18,18 +17,24 @@ const targets = [
 
 const selectedFile = ref<File | null>(null);
 const decks = ref<Deck[]>([]);
+const subjects = ref<Subject[]>([]);
 const selectedDeckId = ref("");
 const uploadedFile = ref<UploadedFile | null>(null);
 const preview = ref<SpreadsheetPreview | null>(null);
-const mapping = ref<Record<string, string>>({});
+const mapping = ref<Record<string, number | null>>({});
 const validation = ref<SpreadsheetValidation | null>(null);
 const importResult = ref<ImportResult | null>(null);
 const busy = ref(false);
+const decksLoading = ref(false);
+const decksError = ref("");
+const importError = ref("");
 const errorMessage = ref("");
 const fileInput = ref<HTMLInputElement | null>(null);
-const mappedCount = computed(() => Object.values(mapping.value).filter(Boolean).length);
+const mappedCount = computed(() => Object.values(mapping.value).filter((column) => column !== null).length);
 const activeMapping = computed(() =>
-  Object.fromEntries(Object.entries(mapping.value).filter(([, column]) => Boolean(column))),
+  Object.fromEntries(
+    Object.entries(mapping.value).filter((entry): entry is [string, number] => entry[1] !== null),
+  ),
 );
 
 watch(
@@ -44,33 +49,57 @@ watch(
 const emit = defineEmits<{ navigate: [view: "library"] }>();
 
 async function loadDecks() {
+  decksLoading.value = true;
   try {
-    const page = await api.listDecks();
-    decks.value = page.items;
-    selectedDeckId.value = decks.value[0]?.id ?? "";
+    const [deckPage, subjectPage] = await Promise.all([api.listDecks(), api.listSubjects()]);
+    decks.value = deckPage.items;
+    subjects.value = subjectPage.items;
+    decksError.value = "";
+    if (!decks.value.some((deck) => deck.id === selectedDeckId.value)) {
+      selectedDeckId.value = decks.value[0]?.id ?? "";
+    }
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : "Não foi possível carregar os decks.";
+    decksError.value = error instanceof Error ? error.message : "Não foi possível carregar os decks.";
+  } finally {
+    decksLoading.value = false;
   }
+}
+
+function deckOptionLabel(deck: Deck): string {
+  const subjectName = subjects.value.find((subject) => subject.id === deck.subject_id)?.name;
+  return `${deck.name} · ${subjectName ? `Matéria: ${subjectName}` : "Sem matéria"}`;
 }
 
 onMounted(loadDecks);
 
 function suggestMapping(columns: string[]) {
-  const normalized = columns.map((column) => column.trim().toLocaleLowerCase());
+  const normalizeHeader = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase()
+      .replace(/[—–-]/g, " ")
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim()
+      .replace(/\s+/g, " ");
+  const normalized = columns.map(normalizeHeader);
   const synonyms: Record<string, string[]> = {
-    front: ["front", "frente", "pergunta", "question"],
-    back: ["back", "verso", "resposta", "answer"],
-    explanation: ["explanation", "explicação", "explicacao", "comentário", "comentario"],
-    subject: ["subject", "matéria", "materia", "disciplina"],
+    front: ["front", "frente", "pergunta", "question", "frente pergunta"],
+    back: ["back", "verso", "resposta", "answer", "verso definicao descricao"],
+    explanation: ["explanation", "explicacao", "comentario"],
     topic: ["topic", "assunto", "tema"],
-    tags: ["tags", "tag", "etiquetas"],
-    difficulty: ["difficulty", "dificuldade"],
-    source: ["source", "origem", "fonte"],
+    tags: ["tags", "tag", "etiquetas", "bloco"],
+    difficulty: ["difficulty", "dificuldade", "nivel"],
+    source: ["source", "origem", "fonte", "fonte ancora"],
   };
-  const next: Record<string, string> = {};
+  const next: Record<string, number | null> = {};
   for (const target of targets) {
     const index = normalized.findIndex((column) => synonyms[target.key].includes(column));
-    next[target.key] = index >= 0 ? columns[index] : "";
+    next[target.key] = index >= 0 ? index : null;
+  }
+  if (next.front === null && next.back === null && columns.length > 1) {
+    next.front = 0;
+    next.back = 1;
   }
   mapping.value = next;
 }
@@ -116,11 +145,13 @@ async function validateMapping() {
   busy.value = true;
   errorMessage.value = "";
   try {
-    validation.value = await api.validateFile(
+    const result = await api.validateFile(
       uploadedFile.value.id,
       preview.value.preview.selected_sheet,
       activeMapping.value,
     );
+    validation.value = result;
+    if (result.valid) await loadDecks();
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : "Não foi possível validar o mapeamento.";
   } finally {
@@ -132,6 +163,7 @@ async function importCards() {
   if (!uploadedFile.value || !preview.value || !validation.value?.valid || !selectedDeckId.value) return;
   busy.value = true;
   errorMessage.value = "";
+  importError.value = "";
   try {
     importResult.value = await api.importFile({
       file_id: uploadedFile.value.id,
@@ -140,7 +172,11 @@ async function importCards() {
       mapping: activeMapping.value,
     });
   } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : "Não foi possível importar os cards.";
+    if (error instanceof ApiError && error.message === "Spreadsheet subject values must match the selected deck subject.") {
+      importError.value = "A planilha enviou uma matéria diferente da associada ao deck. Atualize a tela, deixe a coluna Matéria sem mapear e associe Tema ao campo Assunto.";
+    } else {
+      importError.value = error instanceof ApiError ? error.message : "Não foi possível importar os cards.";
+    }
   } finally {
     busy.value = false;
   }
@@ -174,6 +210,19 @@ function formatBytes(value: number): string {
         Novo arquivo
       </button>
     </header>
+
+    <aside class="import-format-note" role="note">
+      <strong>Formato esperado</strong>
+      <span>
+        CSV, XLS ou XLSX com cabeçalhos na primeira linha. Frente e Verso são obrigatórios; Explicação,
+        Assunto, Tags, Dificuldade e Origem são opcionais. A matéria dos cards vem do deck selecionado;
+        a coluna Matéria da planilha não precisa ser mapeada. O sistema sugere o mapeamento pelo
+        título e envia os índices das colunas, então elas podem estar em qualquer ordem. Se não reconhecer
+        nenhum dos títulos de Frente e Verso, sugere as duas primeiras colunas; confira antes de validar. Colunas
+        extras, como ID, podem ficar sem mapear. São reconhecidos títulos como “Frente”, “Pergunta”, “Question”,
+        “Verso”, “Resposta”, “Answer”, “Tema”, “Bloco”, “Nível” e “Fonte”.
+      </span>
+    </aside>
 
     <p v-if="errorMessage" class="notice notice-error" role="alert">
       <AlertCircle :size="16" aria-hidden="true" /> {{ errorMessage }}
@@ -257,8 +306,10 @@ function formatBytes(value: number): string {
           <label v-for="target in targets" :key="target.key" class="mapping-field">
             <span>{{ target.label }} <b v-if="target.required">*</b></span>
             <select v-model="mapping[target.key]">
-              <option value="">Não mapear</option>
-              <option v-for="column in preview.preview.columns" :key="column" :value="column">{{ column }}</option>
+              <option :value="null">Não mapear</option>
+              <option v-for="(column, index) in preview.preview.columns" :key="index" :value="index">
+                Coluna {{ index + 1 }} — {{ column || "(sem título)" }}
+              </option>
             </select>
           </label>
         </div>
@@ -273,16 +324,35 @@ function formatBytes(value: number): string {
       </section>
 
       <section v-if="validation?.valid" class="import-confirmation">
-        <label class="form-field">Adicionar cards ao deck
+        <p v-if="decksLoading" class="quiet-count" role="status">Carregando decks disponíveis…</p>
+
+        <p v-else-if="decksError" class="notice notice-error" role="alert">{{ decksError }}</p>
+
+        <p v-else-if="!decks.length" class="notice notice-warn" role="status">
+          Nenhum deck disponível. Crie um deck na Biblioteca antes de importar os cards.
+        </p>
+
+        <button v-if="decksError && !decksLoading" class="button button-outline" type="button" @click="loadDecks">
+          Tentar carregar decks novamente
+        </button>
+
+        <label v-if="!decksLoading && !decksError && decks.length" class="form-field">Adicionar cards ao deck
           <select v-model="selectedDeckId" :disabled="busy || Boolean(importResult)">
             <option value="">Selecione um deck</option>
-            <option v-for="deck in decks" :key="deck.id" :value="deck.id">{{ deck.name }}</option>
+            <option v-for="deck in decks" :key="deck.id" :value="deck.id">{{ deckOptionLabel(deck) }}</option>
           </select>
         </label>
-        <button v-if="decks.length" class="button button-primary" type="button" :disabled="busy || !selectedDeckId || Boolean(importResult)" @click="importCards">
+
+        <button v-if="!decksLoading && !decksError && decks.length" class="button button-primary" type="button" :disabled="busy || !selectedDeckId || Boolean(importResult)" @click="importCards">
           <Check :size="16" aria-hidden="true" /> {{ busy ? "Importando…" : `Importar ${validation.valid_rows} cards` }}
         </button>
-        <button v-else class="button button-outline" type="button" @click="emit('navigate', 'library')">Criar deck primeiro</button>
+
+        <p v-if="importError" class="notice notice-error" role="alert">{{ importError }}</p>
+
+        <button v-if="!decksLoading && !decksError && !decks.length" class="button button-outline" type="button" @click="emit('navigate', 'library')">
+          Ir para a Biblioteca e criar um deck
+        </button>
+
         <p v-if="importResult" class="notice notice-success" role="status">
           <Check :size="16" aria-hidden="true" /> {{ importResult.processed_rows }} cards importados com sucesso.
         </p>
@@ -325,6 +395,20 @@ function formatBytes(value: number): string {
   background: rgba(255, 255, 255, 0.7);
   text-align: center;
 }
+
+.import-format-note {
+  display: grid;
+  gap: 5px;
+  padding: 12px 15px;
+  border: 1px solid #d7e4dc;
+  border-radius: 7px;
+  background: #f3f8f4;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.import-format-note strong { color: var(--ink); font-size: 12px; }
 
 .upload-mark,
 .file-leading {
@@ -507,6 +591,13 @@ function formatBytes(value: number): string {
 
 .mapping-field b {
   color: var(--coral);
+}
+
+.mapping-field small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.45;
 }
 
 .mapping-footer {

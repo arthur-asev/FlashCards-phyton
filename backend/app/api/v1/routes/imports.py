@@ -26,7 +26,7 @@ class ImportRequest(BaseModel):
 
     file_id: UUID
     deck_id: UUID
-    mapping: dict[str, str] = Field(min_length=2)
+    mapping: dict[str, str | int] = Field(min_length=2)
     sheet_name: str | None = None
 
 

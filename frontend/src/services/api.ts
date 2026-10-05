@@ -67,10 +67,12 @@ function queryString(values: Record<string, string | undefined>): string {
 
 export const api = {
   getReviewStats: () => request<ReviewStats>("/reviews/stats"),
-  getDueCards: (pageSize = 20) =>
-    request<Page<Flashcard & { next_review_at: string | null }>>(
-      `/reviews/due?page=1&page_size=${pageSize}`,
-    ),
+  getDueCards: (pageSize = 20, filters: { deck_id?: string; topic_ids?: string[] } = {}) => {
+    const query = new URLSearchParams({ page: "1", page_size: String(pageSize) });
+    if (filters.deck_id) query.set("deck_id", filters.deck_id);
+    filters.topic_ids?.forEach((topicId) => query.append("topic_ids", topicId));
+    return request<Page<Flashcard & { next_review_at: string | null }>>(`/reviews/due?${query.toString()}`);
+  },
   getReviewHistory: (pageSize = 10) =>
     request<Page<ReviewItem>>(`/reviews/history?page=1&page_size=${pageSize}`),
   submitReview: (cardId: string, rating: number) =>
@@ -115,7 +117,7 @@ export const api = {
   validateFile: (
     id: string,
     sheetName: string,
-    mapping: Record<string, string>,
+    mapping: Record<string, number>,
   ) =>
     request<SpreadsheetValidation>(
       `/files/${id}/validate`,
@@ -126,7 +128,7 @@ export const api = {
       file_id: string;
       deck_id: string;
       sheet_name: string;
-      mapping: Record<string, string>;
+      mapping: Record<string, number>;
     },
   ) => request<ImportResult>("/imports", jsonRequest("POST", payload)),
   enqueueAIGeneration: (payload: {

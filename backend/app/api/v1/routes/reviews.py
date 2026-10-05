@@ -36,7 +36,9 @@ def serialize_review(review: Review, card: Card | None = None) -> dict[str, obje
     return result
 
 
-def due_cards_query(now: datetime, deck_id: UUID | None = None):
+def due_cards_query(
+    now: datetime, deck_id: UUID | None = None, topic_ids: list[UUID] | None = None
+):
     latest_review_id = (
         select(Review.id)
         .where(Review.card_id == Card.id, Review.user_id.is_(None))
@@ -60,6 +62,8 @@ def due_cards_query(now: datetime, deck_id: UUID | None = None):
     )
     if deck_id is not None:
         query = query.where(Card.deck_id == deck_id)
+    if topic_ids:
+        query = query.where(Card.topic_id.in_(topic_ids))
     return query
 
 
@@ -107,9 +111,10 @@ def list_due_cards(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     deck_id: UUID | None = None,
+    topic_ids: list[UUID] = Query(default=[]),
     db: Session = Depends(get_db),
 ) -> dict[str, object]:
-    query = due_cards_query(datetime.now(timezone.utc), deck_id).order_by(
+    query = due_cards_query(datetime.now(timezone.utc), deck_id, topic_ids).order_by(
         Card.created_at, Card.id
     )
     total = (

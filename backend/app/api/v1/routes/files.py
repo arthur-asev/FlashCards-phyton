@@ -29,7 +29,7 @@ spreadsheet_importer = SpreadsheetImporter()
 
 
 class SpreadsheetValidationRequest(BaseModel):
-    mapping: dict[str, str]
+    mapping: dict[str, str | int]
     sheet_name: str | None = None
 
 

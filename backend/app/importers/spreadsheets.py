@@ -182,7 +182,7 @@ class SpreadsheetImporter(Importer[SpreadsheetTable]):
 
 def validate_column_mapping(
     table: SpreadsheetTable,
-    mapping: dict[str, str],
+    mapping: dict[str, str | int],
 ) -> dict[str, object]:
     issues: list[dict[str, int | str | None]] = []
     normalized_headers = [header.casefold() for header in table.headers]
@@ -204,7 +204,8 @@ def validate_column_mapping(
                 "message": f"A source column must be mapped to '{field}'.",
             }
         )
-    if len(normalized_headers) != len(set(normalized_headers)):
+    uses_header_names = any(isinstance(source, str) for source in mapping.values())
+    if uses_header_names and len(normalized_headers) != len(set(normalized_headers)):
         issues.append(
             {
                 "row": 1,
@@ -222,17 +223,28 @@ def validate_column_mapping(
         )
 
     column_indexes: dict[str, int] = {}
-    for field, source_header in mapping.items():
-        if source_header not in table.headers:
+    for field, source_column in mapping.items():
+        if isinstance(source_column, int) and not isinstance(source_column, bool):
+            if not 0 <= source_column < len(table.headers):
+                issues.append(
+                    {
+                        "row": None,
+                        "code": "COLUMN_INDEX_OUT_OF_RANGE",
+                        "message": f"Column index {source_column} is outside the spreadsheet.",
+                    }
+                )
+            else:
+                column_indexes[field] = source_column
+        elif source_column not in table.headers:
             issues.append(
                 {
                     "row": None,
                     "code": "COLUMN_NOT_FOUND",
-                    "message": f"Source column '{source_header}' was not found.",
+                    "message": f"Source column '{source_column}' was not found.",
                 }
             )
         else:
-            column_indexes[field] = table.headers.index(source_header)
+            column_indexes[field] = table.headers.index(source_column)
 
     if issues:
         return {

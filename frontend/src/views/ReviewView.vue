@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles } from "@lucide/vue";
+import MultiSelect from "primevue/multiselect";
+import Select from "primevue/select";
 
 import { api, ApiError } from "../services/api";
-import type { Flashcard, ReviewStats } from "../types";
+import type { Deck, Flashcard, ReviewStats, Topic } from "../types";
 
 type DueCard = Flashcard & { next_review_at: string | null };
 
 const cards = ref<DueCard[]>([]);
 const stats = ref<ReviewStats | null>(null);
+const decks = ref<Deck[]>([]);
+const topics = ref<Topic[]>([]);
+const selectedDeckId = ref("");
+const selectedTopicIds = ref<string[]>([]);
 const activeIndex = ref(0);
 const showBack = ref(false);
 const busy = ref(false);
@@ -21,7 +27,10 @@ async function loadQueue() {
   busy.value = true;
   errorMessage.value = "";
   try {
-    const [due, reviewStats] = await Promise.all([api.getDueCards(100), api.getReviewStats()]);
+    const [due, reviewStats] = await Promise.all([
+      api.getDueCards(100, { deck_id: selectedDeckId.value || undefined, topic_ids: selectedTopicIds.value }),
+      api.getReviewStats(),
+    ]);
     cards.value = due.items;
     stats.value = reviewStats;
     activeIndex.value = 0;
@@ -32,6 +41,22 @@ async function loadQueue() {
     busy.value = false;
   }
 }
+
+async function loadTopics() {
+  const deck = decks.value.find((item) => item.id === selectedDeckId.value);
+  topics.value = deck?.subject_id ? (await api.listTopics(deck.subject_id)).items : [];
+  selectedTopicIds.value = selectedTopicIds.value.filter((id) => topics.value.some((topic) => topic.id === id));
+}
+
+function setSelectedTopics(value: string[] | null) {
+  selectedTopicIds.value = value ?? [];
+}
+
+watch(selectedDeckId, async () => {
+  await loadTopics();
+  await loadQueue();
+});
+watch(selectedTopicIds, loadQueue);
 
 async function rateCard(rating: number) {
   if (!activeCard.value) return;
@@ -58,7 +83,15 @@ function moveCard(direction: -1 | 1) {
   showBack.value = false;
 }
 
-onMounted(loadQueue);
+onMounted(async () => {
+  try {
+    decks.value = (await api.listDecks()).items;
+    await loadTopics();
+    await loadQueue();
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : "Não foi possível carregar decks e categorias.";
+  }
+});
 </script>
 
 <template>
@@ -67,9 +100,34 @@ onMounted(loadQueue);
       <div>
         <p class="eyebrow">SESSÃO DE ESTUDO</p>
         <h1>Revisar cards</h1>
-        <p class="heading-note">{{ stats?.due_cards ?? cards.length }} para revisar <span class="dot-separator">/</span> {{ stats?.total_reviews ?? 0 }} avaliações registradas</p>
+        <p class="heading-note">{{ cards.length }} para revisar nesta seleção <span class="dot-separator">/</span> {{ stats?.total_reviews ?? 0 }} avaliações registradas</p>
       </div>
-      <button class="button button-quiet" type="button" :disabled="busy" @click="loadQueue"><RotateCcw :size="15" /> Atualizar fila</button>
+      <div class="review-filters">
+        <label>Deck
+          <Select v-model="selectedDeckId" :options="[{ id: '', name: 'Todos os decks' }, ...decks]" option-label="name" option-value="id" aria-label="Filtrar por deck" class="review-deck-select" />
+        </label>
+        <label>Categoria
+          <MultiSelect
+            v-model="selectedTopicIds"
+            @update:model-value="setSelectedTopics"
+            :options="topics"
+            option-label="name"
+            option-value="id"
+            :disabled="!topics.length"
+            :placeholder="topics.length ? 'Todas as categorias' : 'Selecione um deck primeiro'"
+            :max-selected-labels="2"
+            selected-items-label="{0} categorias selecionadas"
+            empty-filter-message="Nenhuma categoria encontrada"
+            empty-message="Nenhuma categoria disponível"
+            filter
+            show-clear
+            display="chip"
+            aria-label="Selecionar categorias da revisão"
+            class="review-category-select"
+          />
+        </label>
+        <button class="button button-quiet" type="button" :disabled="busy" @click="loadQueue"><RotateCcw :size="15" /> Atualizar fila</button>
+      </div>
     </header>
 
     <p v-if="errorMessage" class="notice notice-error" role="alert">{{ errorMessage }}</p>
@@ -120,6 +178,13 @@ onMounted(loadQueue);
 
 <style scoped>
 .review-session { width: min(760px, 100%); margin: 0 auto; }
+.review-filters { display: flex; align-items: end; gap: 10px; }
+.review-filters label { display: grid; min-width: 180px; gap: 4px; color: var(--muted); font-size: 10px; }
+.review-filters :deep(.p-select), .review-filters :deep(.p-multiselect) { width: 100%; min-height: 37px; border-color: var(--line-strong); border-radius: 5px; background: var(--surface); color: var(--ink); font-family: var(--font-sans); font-size: 12px; }
+.review-filters :deep(.p-select-label), .review-filters :deep(.p-multiselect-label) { padding: 8px 10px; }
+.review-filters :deep(.p-multiselect-label) { display: flex; flex-wrap: wrap; gap: 4px; }
+.review-filters :deep(.p-multiselect-chip) { border-radius: 4px; background: #e8f3ee; color: var(--teal-dark); font-size: 10px; }
+.review-filters :deep(.p-select-dropdown), .review-filters :deep(.p-multiselect-dropdown) { width: 32px; }
 .session-topline { display: grid; grid-template-columns: 55px minmax(0, 1fr) 70px; align-items: center; gap: 12px; margin-bottom: 12px; }
 .session-count { color: var(--ink); font-family: var(--font-mono); font-size: 11px; }
 .session-count i { padding: 0 3px; color: var(--muted); font-style: normal; }
@@ -155,6 +220,8 @@ onMounted(loadQueue);
 .notice-success, .notice-error { display: flex; align-items: center; gap: 8px; }
 
 @media (max-width: 620px) {
+  .review-filters { flex-wrap: wrap; align-items: stretch; }
+  .review-filters label { flex: 1 1 190px; }
   .study-card { min-height: 310px; padding: 17px; }
   .study-card-content > p { font-size: 21px; }
   .rating-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
